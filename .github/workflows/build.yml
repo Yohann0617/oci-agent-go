@@ -75,8 +75,12 @@ jobs:
             goarch: arm64
           - goos: windows
             goarch: amd64
+          - goos: windows
+            goarch: arm64
           - goos: freebsd
             goarch: amd64
+          - goos: freebsd
+            goarch: arm64
     steps:
       - uses: actions/checkout@v4
 
