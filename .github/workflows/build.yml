@@ -50,9 +50,33 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        goos: [ linux, windows, darwin, freebsd ]
-        goarch: [ amd64, arm64 ]
-
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: linux
+            goarch: arm
+            goarm: 6
+          - goos: linux
+            goarch: arm
+            goarm: 7
+          - goos: linux
+            goarch: 386
+          - goos: linux
+            goarch: ppc64le
+          - goos: linux
+            goarch: s390x
+          - goos: linux
+            goarch: riscv64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+          - goos: freebsd
+            goarch: amd64
     steps:
       - uses: actions/checkout@v4
 
@@ -65,19 +89,27 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm || '' }}
         run: |
           mkdir -p dist
           ext=""
-          if [ "${GOOS}" == "windows" ]; then ext=".exe"; fi
-          output="dist/oci-agent-${GOOS}-${GOARCH}${ext}"
+          if [[ "${GOOS}" == "windows" ]]; then ext=".exe"; fi
+          
+          suffix="${GOOS}-${GOARCH}"
+          if [[ "${GOARCH}" == "arm" && -n "${GOARM}" ]]; then
+            suffix="${suffix}v${GOARM}"
+          fi
+          
+          output="dist/oci-agent-${suffix}${ext}"
           echo "Building $output"
+
           CGO_ENABLED=0 go build -ldflags="-s -w" -o "$output" main.go
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: oci-agent-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: dist/oci-agent-${{ matrix.goos }}-${{ matrix.goarch }}*
+          name: oci-agent-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goarm && format('v{0}', matrix.goarm) || '' }}
+          path: dist/oci-agent-*
 
   release:
     needs: [ tag, build ]
