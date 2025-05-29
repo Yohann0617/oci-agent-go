@@ -50,11 +50,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        goos: [linux, windows, darwin]
-        goarch: [amd64, arm64]
+        goos: [ linux, windows, darwin, freebsd ]
+        goarch: [ amd64, arm64 ]
         exclude:
-          - goos: windows
-            goarch: arm64  # Windows ARM64 可以排除，除非特别需要
+#          - goos: windows
+#            goarch: arm64
+#          - goos: darwin
+#            goarch: arm64  # 可根据需要保留
+#          - goos: freebsd
+#            goarch: arm64  # FreeBSD ARM64 可留意实际部署需求
     steps:
       - uses: actions/checkout@v4
 
@@ -82,7 +86,7 @@ jobs:
           path: dist/oci-agent-${{ matrix.goos }}-${{ matrix.goarch }}*
 
   release:
-    needs: [tag, build]
+    needs: [ tag, build ]
     runs-on: ubuntu-latest
     name: Create GitHub Release
     steps:
