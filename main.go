@@ -221,19 +221,23 @@ func sendHeartbeat(url string) {
 }
 
 func main() {
-	for {
-		info := getSystemInfo()
+	info := getSystemInfo()
 
-		// 将 info 转为 JSON 字符串
-		jsonBytes, err := json.MarshalIndent(info, "", "  ")
-		if err != nil {
-			fmt.Println("JSON encode error:", err)
-		} else {
-			fmt.Println(string(jsonBytes))
-		}
+	// 将 info 转为 JSON 字符串
+	jsonBytes, err := json.MarshalIndent(info, "", "  ")
+	if err != nil {
+		fmt.Println("JSON encode error:", err)
+	} else {
+		fmt.Println(string(jsonBytes))
+	}
+
+	for {
+		upload, download := getNetworkSpeed(1 * time.Second)
+
+		fmt.Printf("Upload: %s , Download: %s\n", formatBytes(uint64(upload)), formatBytes(uint64(download)))
 
 		//reportToServer(info, "http://your-java-server-url/report")
 		//sendHeartbeat("http://your-java-server-url/heartbeat")
-		time.Sleep(60 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }
