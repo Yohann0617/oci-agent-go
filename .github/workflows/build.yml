@@ -52,13 +52,7 @@ jobs:
       matrix:
         goos: [ linux, windows, darwin, freebsd ]
         goarch: [ amd64, arm64 ]
-        exclude:
-#          - goos: windows
-#            goarch: arm64
-#          - goos: darwin
-#            goarch: arm64  # 可根据需要保留
-#          - goos: freebsd
-#            goarch: arm64  # FreeBSD ARM64 可留意实际部署需求
+
     steps:
       - uses: actions/checkout@v4
 
