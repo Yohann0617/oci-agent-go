@@ -157,15 +157,17 @@ func getPhysicalCores() int {
 		out, _ := exec.Command("lscpu", "-p").Output()
 		lines := strings.Split(string(out), "\n")
 		cores := 0
+		seen := make(map[string]bool) // 初始化映射用于去重
 		for _, line := range lines {
-			if !strings.HasPrefix(line, "#") && line != "" {
-				fields := strings.Split(line, ",")
-				if len(fields) >= 2 {
-					// 统计唯一的 (物理ID, 核心ID) 组合
-					key := fields[1] + "-" + fields[2]
-					if _, exists := make(map[string]bool)[key]; !exists {
-						cores++
-					}
+			if strings.HasPrefix(line, "#") || line == "" {
+				continue
+			}
+			fields := strings.Split(line, ",")
+			if len(fields) >= 3 {
+				key := fields[1] + "-" + fields[2]
+				if !seen[key] {
+					seen[key] = true
+					cores++
 				}
 			}
 		}
