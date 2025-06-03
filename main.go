@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -150,6 +151,40 @@ func getAllDisksUsage() (map[string]interface{}, error) {
 	return diskInfo, nil
 }
 
+func getPhysicalCores() int {
+	switch runtime.GOOS {
+	case "linux":
+		out, _ := exec.Command("lscpu", "-p").Output()
+		lines := strings.Split(string(out), "\n")
+		cores := 0
+		for _, line := range lines {
+			if !strings.HasPrefix(line, "#") && line != "" {
+				fields := strings.Split(line, ",")
+				if len(fields) >= 2 {
+					// 统计唯一的 (物理ID, 核心ID) 组合
+					key := fields[1] + "-" + fields[2]
+					if _, exists := make(map[string]bool)[key]; !exists {
+						cores++
+					}
+				}
+			}
+		}
+		return cores
+	case "darwin":
+		out, _ := exec.Command("sysctl", "-n", "hw.physicalcpu").Output()
+		cores, _ := strconv.Atoi(strings.TrimSpace(string(out)))
+		return cores
+	case "windows":
+		out, _ := exec.Command("wmic", "cpu", "get", "NumberOfCores").Output()
+		lines := strings.Split(string(out), "\n")
+		if len(lines) >= 2 {
+			cores, _ := strconv.Atoi(strings.TrimSpace(lines[1]))
+			return cores
+		}
+	}
+	return runtime.NumCPU() // 默认回退到逻辑核心数
+}
+
 func getSystemInfo() map[string]interface{} {
 	vmem, _ := mem.VirtualMemory()
 	swap, _ := mem.SwapMemory()
@@ -169,7 +204,7 @@ func getSystemInfo() map[string]interface{} {
 		"architecture":     runtime.GOARCH,
 		"cpu": map[string]interface{}{
 			"model":   cpus[0].ModelName,
-			"count":   runtime.NumCPU(),
+			"count":   getPhysicalCores(),
 			"percent": math.Round(cpuPercent[0]*100) / 100,
 		},
 		"memory": map[string]interface{}{
